@@ -1,11 +1,19 @@
 from consultation_agent.my_assistant import AppointmentHelper
 from consultation_agent.my_tool import ConsultationBook
+from mock_model import MockModel
+
+
+class SlientModel:
+    """A model that never has an answer. It stands in for Ollama being switched off."""
+
+    def reply(self, instructions, history):
+        return None
 
 
 def make_helper():
     """Build a new helper everytime a test is ran with its own history and data"""
     book = ConsultationBook({"monday": "9:00 am and 2:30 pm", "friday": "none"})
-    return AppointmentHelper("Timmy", "Be informative", book)
+    return AppointmentHelper("Timmy", "Be informative", book, MockModel())
 
 
 def test_open_times_question_uses_the_tool():
@@ -40,3 +48,14 @@ def test_history_grows_by_two_each_time():
     helper.respond("Which days are open?")
     helper.respond("what is open for Monday?")
     assert len(helper.history) == 6
+
+
+def test_unkown_request_gets_safe_reply():
+    book = ConsultationBook({"monday": "9:00 am and 2:30 pm"})
+    helper = AppointmentHelper("Timmy", "Be Clear", book, SlientModel())
+    assert "try again" in helper.respond("What is your favorite color?")
+
+
+def test_other_messages_go_to_the_model():
+    helper = make_helper()
+    assert helper.respond("hello") == "Hello how can I help you today?"

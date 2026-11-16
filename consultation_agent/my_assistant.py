@@ -35,7 +35,7 @@ class AppointmentHelper:
         """Ask the model for a reply. Give a safe answer if the model has none."""
         reply = self.model.reply(self.instructions, self.history)
         if reply is None:
-            return "I can't change the schedule. I'm passing you to the front desk."
+            return "Sorry, I can't answer that right now. Please try again in a moment."
         return reply
 
     def needs_human(self, text):

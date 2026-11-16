@@ -1,10 +1,14 @@
 # main.py
 # Author: Rahim Rozani
 
+from change_queue import ChangeQueue
 from chatbot import SupportChatbot
 from ollama_model import OllamaModel
 from order_tool import OrderLookup
 from stock_tool import StockLookup
+from toolbox import Toolbox
+from fallback_model import FallbackModel
+from keyword_model import KeywordModel
 
 MODEL_NAME = "granite4.1:3b"
 
@@ -31,14 +35,10 @@ STOCK = {
 
 order_tool = OrderLookup(ORDERS)
 stock_tool = StockLookup(STOCK)
-model = OllamaModel(MODEL_NAME)
-bot = SupportChatbot(
-    "Sunny",
-    "You are a riendly support assistant for Bayside Outfitters",
-    order_tool,
-    stock_tool,
-    model,
-)
+change_queue = ChangeQueue(order_tool)
+tools = Toolbox(order_tool, stock_tool, change_queue)
+model = FallbackModel(OllamaModel(MODEL_NAME), KeywordModel())
+bot = SupportChatbot("Sunny", INSTRUCTIONS, tools, model)
 
 print("Type a message, or type quit to stop")
 user_message = input("You: ")
@@ -47,3 +47,16 @@ while user_message != "quit":
     user_message = input("You: ")
 
 print(f"Messages in this conversation: {len(bot.history)}")
+
+print("Staff review")
+for request in change_queue.waiting():
+    number = request["number"]
+    print(f"Request {number}: {request['order_id']} to {request['new_address']}")
+    answer = input("Approve? yes or no: ")
+    if answer == "yes":
+        print(change_queue.approve(number))
+    else:
+        print(change_queue.reject(number))
+
+for order_id in ORDERS:
+    print(order_id, ORDERS[order_id]["address"])

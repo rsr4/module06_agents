@@ -58,4 +58,4 @@ def test_unkown_request_gets_safe_reply():
 
 def test_other_messages_go_to_the_model():
     helper = make_helper()
-    assert helper.respond("hello") == "Hello how can I help you today?"
+    assert helper.respond("hello") == "Hello how can I help you!"
